@@ -1,6 +1,7 @@
 -- 实验室 · 试剂柜与领用
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS bench_order;
 DROP TABLE IF EXISTS usage_log;
 DROP TABLE IF EXISTS instrument;
 DROP TABLE IF EXISTS reagent;
@@ -23,6 +24,7 @@ CREATE TABLE reagent (
   spec_text      VARCHAR(32) NULL,
   cabinet_id     BIGINT      NULL,
   balance        INT         NOT NULL DEFAULT 0,
+  reserved       INT         NOT NULL DEFAULT 0,
   expire_date    DATE        NULL,
   reagent_status VARCHAR(16) NOT NULL,
   PRIMARY KEY (id),
@@ -53,6 +55,25 @@ CREATE TABLE usage_log (
   PRIMARY KEY (id),
   UNIQUE KEY uk_log_no (log_no),
   KEY idx_log_reagent (reagent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 对照试验开台单：open_flag 未收口时恒为 1、收口后置空，
+-- 靠 (instrument_id, open_flag) 唯一索引挡住「一台仪器两条开着的单」（MySQL 唯一索引里 NULL 不互斥）
+CREATE TABLE bench_order (
+  id            BIGINT      NOT NULL AUTO_INCREMENT,
+  order_no      VARCHAR(24) NOT NULL,
+  instrument_id BIGINT      NOT NULL,
+  reagent_id    BIGINT      NOT NULL,
+  user_name     VARCHAR(32) NOT NULL,
+  quantity      INT         NOT NULL DEFAULT 1,
+  order_status  VARCHAR(16) NOT NULL,
+  open_time     DATETIME    NOT NULL,
+  close_time    DATETIME    NULL,
+  open_flag     INT         NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_bench_order_no (order_no),
+  UNIQUE KEY uk_bench_open (instrument_id, open_flag),
+  KEY idx_bench_reagent (reagent_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO cabinet (cabinet_code, cabinet_name, cabinet_kind, cabinet_status) VALUES

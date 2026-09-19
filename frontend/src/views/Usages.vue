@@ -13,7 +13,7 @@
       <select v-model="form.reagentId" class="pick">
         <option :value="null">选一瓶试剂</option>
         <option v-for="r in usable" :key="r.id" :value="r.id">
-          {{ r.reagentCode }} {{ r.reagentName }}（余 {{ r.balance }}）
+          {{ r.reagentCode }} {{ r.reagentName }}（余 {{ r.balance - (r.reserved || 0) }}）
         </option>
       </select>
       <input v-model="form.userName" class="who" placeholder="领用人" />

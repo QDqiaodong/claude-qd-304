@@ -36,6 +36,10 @@ public class Reagent {
     @Column(name = "balance", nullable = false)
     public Integer balance;
 
+    /** 开台预占出去的量 —— 占着位但没写领用流水，收口才真正销掉 */
+    @Column(name = "reserved")
+    public Integer reserved;
+
     @Column(name = "expire_date")
     public LocalDate expireDate;
 
@@ -45,6 +49,11 @@ public class Reagent {
     /** 有效期已经过了 */
     public boolean expired() {
         return expireDate != null && expireDate.isBefore(LocalDate.now());
+    }
+
+    /** 现库存里还能动用的量：账面库存扣掉被开台预占走的 */
+    public int available() {
+        return (balance == null ? 0 : balance) - (reserved == null ? 0 : reserved);
     }
 
     /** 还能领出来吗 —— 把不能领的原因直接说清楚 */
@@ -58,8 +67,8 @@ public class Reagent {
         if ("停用".equals(reagentStatus)) {
             throw new BizException("「" + reagentName + "」已经停用");
         }
-        if (balance == null || balance < qty) {
-            throw new BizException("「" + reagentName + "」只剩 " + balance + "，领不了 " + qty);
+        if (available() < qty) {
+            throw new BizException("「" + reagentName + "」只剩 " + available() + "，领不了 " + qty);
         }
     }
 
@@ -83,6 +92,37 @@ public class Reagent {
         balance = (balance == null ? 0 : balance) + qty;
         if ("已用完".equals(reagentStatus)) {
             reagentStatus = "可用";
+        }
+    }
+
+    /** 开台预占：从现库存里占出一瓶对照试剂 —— 只占位置，不走领用流水。 */
+    public void reserve() {
+        if (expired()) {
+            throw new BizException("「" + reagentName + "」" + expireDate + " 就到期了，开不了台");
+        }
+        if ("停用".equals(reagentStatus)) {
+            throw new BizException("「" + reagentName + "」已经停用，开不了台");
+        }
+        if (available() < 1) {
+            throw new BizException("「" + reagentName + "」没有能预占的库存了，开不了台");
+        }
+        reserved = (reserved == null ? 0 : reserved) + 1;
+    }
+
+    /** 开台作废：预占的那瓶吐回架上，试剂回到还能再开的状态。 */
+    public void releaseReserved() {
+        if (reserved == null || reserved <= 0) {
+            throw new BizException("「" + reagentName + "」没有预占可以吐回");
+        }
+        reserved -= 1;
+    }
+
+    /** 开台收口：预占的这瓶真正用掉，从账面库存里销掉。 */
+    public void consumeReserved() {
+        releaseReserved();
+        balance = (balance == null ? 0 : balance) - 1;
+        if (balance == 0) {
+            reagentStatus = "已用完";
         }
     }
 }

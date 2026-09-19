@@ -16,7 +16,7 @@
           <div class="r-fill" :style="{ width: barWidth(r) + '%' }"></div>
         </div>
         <div class="r-foot">
-          <span>库存 {{ r.balance }}</span>
+          <span>库存 {{ r.balance }}<template v-if="r.reserved"> · 预占 {{ r.reserved }}</template></span>
           <span>{{ r.expireDate }}</span>
         </div>
         <button class="ghost" @click="openEdit(r)">修改</button>

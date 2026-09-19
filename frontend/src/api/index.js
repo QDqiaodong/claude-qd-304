@@ -27,5 +27,11 @@ export default {
   usages: {
     list: (params) => http.get('/usages', { params }),
     add: (body) => http.post('/usages', body)
+  },
+  benches: {
+    list: (params) => http.get('/benches', { params }),
+    open: (body) => http.post('/benches', body),
+    complete: (id) => http.post(`/benches/${id}/complete`),
+    void: (id) => http.post(`/benches/${id}/void`)
   }
 }

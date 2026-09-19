@@ -5,7 +5,8 @@ const routes = [
   { path: '/cabinets', component: () => import('../views/Cabinets.vue'), meta: { label: '试剂柜' } },
   { path: '/reagents', component: () => import('../views/Reagents.vue'), meta: { label: '试剂' } },
   { path: '/instruments', component: () => import('../views/Instruments.vue'), meta: { label: '仪器' } },
-  { path: '/usages', component: () => import('../views/Usages.vue'), meta: { label: '领用登记' } }
+  { path: '/usages', component: () => import('../views/Usages.vue'), meta: { label: '领用登记' } },
+  { path: '/benches', component: () => import('../views/Benches.vue'), meta: { label: '对照开台' } }
 ]
 
 export const navItems = routes
