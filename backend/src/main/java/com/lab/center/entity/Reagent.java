@@ -85,4 +85,38 @@ public class Reagent {
             reagentStatus = "可用";
         }
     }
+
+    /**
+     * 开台预占：对照试剂一上台就从现库存划出来。
+     * 注意这不是领用 —— 不写领用流水，库存照样扣。
+     */
+    public void reserve(int qty) {
+        if (qty <= 0) {
+            throw new BizException("预占量得大于 0");
+        }
+        if (expired()) {
+            throw new BizException("「" + reagentName + "」" + expireDate + " 就到期了，开不了台");
+        }
+        if ("停用".equals(reagentStatus)) {
+            throw new BizException("「" + reagentName + "」已经停用，开不了台");
+        }
+        if (balance == null || balance < qty) {
+            throw new BizException("「" + reagentName + "」只剩 " + balance + "，不够预占 " + qty);
+        }
+        balance -= qty;
+        if (balance == 0) {
+            reagentStatus = "已用完";
+        }
+    }
+
+    /** 单作废了，预占吐回来，试剂回到还能再开的状态。 */
+    public void release(int qty) {
+        if (qty <= 0) {
+            throw new BizException("吐回量得大于 0");
+        }
+        balance = (balance == null ? 0 : balance) + qty;
+        if ("已用完".equals(reagentStatus)) {
+            reagentStatus = "可用";
+        }
+    }
 }

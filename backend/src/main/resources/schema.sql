@@ -1,6 +1,7 @@
 -- 实验室 · 试剂柜与领用
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS bench_order;
 DROP TABLE IF EXISTS usage_log;
 DROP TABLE IF EXISTS instrument;
 DROP TABLE IF EXISTS reagent;
@@ -53,6 +54,27 @@ CREATE TABLE usage_log (
   PRIMARY KEY (id),
   UNIQUE KEY uk_log_no (log_no),
   KEY idx_log_reagent (reagent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 对照试验开台单：一台仪器 + 一瓶对照试剂，柜型配对过关才开得出来。
+-- open_instrument_id 只在「进行中」时等于 instrument_id，收口就置 NULL；
+-- 靠它的唯一索引保证同一台仪器上未收口的开台只有一条（并发也拦得住）。
+CREATE TABLE bench_order (
+  id                  BIGINT       NOT NULL AUTO_INCREMENT,
+  order_no            VARCHAR(24)  NOT NULL,
+  instrument_id       BIGINT       NOT NULL,
+  reagent_id          BIGINT       NOT NULL,
+  operator_name       VARCHAR(32)  NOT NULL,
+  quantity            INT          NOT NULL DEFAULT 1,
+  status              VARCHAR(16)  NOT NULL,
+  open_instrument_id  BIGINT       NULL,
+  opened_at           DATETIME     NOT NULL,
+  closed_at           DATETIME     NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_order_no (order_no),
+  UNIQUE KEY uk_open_instrument (open_instrument_id),
+  KEY idx_bo_instrument (instrument_id),
+  KEY idx_bo_reagent (reagent_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO cabinet (cabinet_code, cabinet_name, cabinet_kind, cabinet_status) VALUES
